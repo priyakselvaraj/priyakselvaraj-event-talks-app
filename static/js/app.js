@@ -12,9 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // DOM Elements
     const btnRefresh = document.getElementById('btn-refresh');
-    const btnThemeToggle = document.getElementById('btn-theme-toggle');
-    const sunIcon = document.querySelector('.theme-icon-sun');
-    const moonIcon = document.querySelector('.theme-icon-moon');
+    const checkboxThemeToggle = document.getElementById('checkbox-theme-toggle');
     const syncStatus = document.getElementById('sync-status');
     const statusDot = syncStatus.querySelector('.status-indicator-dot');
     const statusText = syncStatus.querySelector('.status-text');
@@ -72,7 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     btnRefresh.addEventListener('click', fetchReleaseNotes);
     btnRetry.addEventListener('click', fetchReleaseNotes);
-    btnThemeToggle.addEventListener('click', toggleTheme);
+    
+    if (checkboxThemeToggle) {
+        checkboxThemeToggle.addEventListener('change', (e) => {
+            const nextTheme = e.target.checked ? 'dark' : 'light';
+            state.theme = nextTheme;
+            localStorage.setItem('theme', nextTheme);
+            applyTheme(nextTheme);
+        });
+    }
     
     searchInput.addEventListener('input', (e) => {
         state.searchQuery = e.target.value.toLowerCase().trim();
@@ -121,25 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
         btnExportCsv.addEventListener('click', exportToCSV);
     }
 
-    // Theme Toggle Function
-    function toggleTheme() {
-        const nextTheme = state.theme === 'light' ? 'dark' : 'light';
-        state.theme = nextTheme;
-        localStorage.setItem('theme', nextTheme);
-        applyTheme(nextTheme);
-    }
-
     function applyTheme(theme) {
+        if (checkboxThemeToggle) {
+            checkboxThemeToggle.checked = (theme === 'dark');
+        }
         if (theme === 'dark') {
             document.documentElement.classList.remove('theme-light');
             document.documentElement.classList.add('theme-dark');
-            sunIcon.style.display = 'none';
-            moonIcon.style.display = 'block';
         } else {
             document.documentElement.classList.remove('theme-dark');
             document.documentElement.classList.add('theme-light');
-            sunIcon.style.display = 'block';
-            moonIcon.style.display = 'none';
         }
     }
 
