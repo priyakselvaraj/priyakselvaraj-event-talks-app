@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const feedEmpty = document.getElementById('feed-empty');
     const feedList = document.getElementById('feed-list');
     const feedCountBadge = document.getElementById('feed-count-badge');
+    const btnExportCsv = document.getElementById('btn-export-csv');
     
     const detailPanel = document.querySelector('.detail-panel');
     const detailEmpty = document.getElementById('detail-empty');
@@ -115,6 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.release-card').forEach(c => c.classList.remove('active'));
         state.selectedUpdate = null;
     });
+
+    if (btnExportCsv) {
+        btnExportCsv.addEventListener('click', exportToCSV);
+    }
 
     // Theme Toggle Function
     function toggleTheme() {
@@ -286,10 +291,39 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="badge ${badgeClass}">${item.category}</span>
                         <span class="card-date">${item.date}</span>
                     </div>
+                    <button class="btn-copy-card" title="Copy to clipboard">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
                 </div>
                 <div class="card-excerpt">${plainTextExcerpt}</div>
                 <div class="card-select-indicator"></div>
             `;
+            
+            const copyBtn = card.querySelector('.btn-copy-card');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const textToCopy = `📢 [BigQuery] ${item.category} (${item.date})\n\n${plainTextExcerpt}\n\nRead more: ${item.link}`;
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const originalHTML = copyBtn.innerHTML;
+                        copyBtn.innerHTML = `
+                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        `;
+                        copyBtn.classList.add('copy-success');
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalHTML;
+                            copyBtn.classList.remove('copy-success');
+                        }, 1500);
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+                });
+            }
             
             card.addEventListener('click', () => selectUpdate(item, card));
             feedList.appendChild(card);
@@ -435,5 +469,47 @@ document.addEventListener('DOMContentLoaded', () => {
         // Remove duplicate spaces and clean up spacing
         text = text.replace(/\n\s*\n/g, '\n').trim();
         return text;
+    }
+
+    function escapeCSVValue(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        let stringValue = String(value);
+        stringValue = stringValue.replace(/"/g, '""');
+        if (/[",\n\r]/.test(stringValue)) {
+            return `"${stringValue}"`;
+        }
+        return stringValue;
+    }
+
+    function exportToCSV() {
+        if (!state.filteredUpdates || state.filteredUpdates.length === 0) {
+            alert("No updates to export!");
+            return;
+        }
+
+        const headers = ['Date', 'Category', 'Link', 'Description'];
+        const rows = state.filteredUpdates.map(item => [
+            item.date,
+            item.category,
+            item.link,
+            stripHtmlTags(item.body)
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(escapeCSVValue).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `bigquery_release_notes_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 });

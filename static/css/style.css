@@ -1132,3 +1132,41 @@ html.theme-dark .btn-tweet-submit:hover {
     width: 100vw;
   }
 }
+
+/* Utility buttons styling */
+.feed-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-copy-card {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  opacity: 0.4;
+  transition: opacity var(--transition-fast), transform var(--transition-fast), color var(--transition-fast);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-copy-card:hover {
+  opacity: 1;
+  color: var(--primary-color);
+  background-color: var(--border-color);
+  transform: scale(1.05);
+}
+
+.btn-copy-card:active {
+  transform: scale(0.95);
+}
+
+.btn-copy-card.copy-success {
+  color: #10b981 !important;
+  opacity: 1 !important;
+}
+
